@@ -1,0 +1,34 @@
+{
+  "name": "pufferpaneljs",
+  "version": "1.0.0",
+  "description": "JS utility for interacting with PufferPanel",
+  "main": "load.js",
+  "module": "src/index.js",
+  "scripts": {
+    "doc": "jsdoc src -r -d docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dada513/PufferPanelJS.git"
+  },
+  "keywords": [
+    "pufferpanel"
+  ],
+  "author": "dada513",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/dada513/PufferPanelJS/issues"
+  },
+  "homepage": "https://github.com/dada513/PufferPanelJS#readme",
+  "dependencies": {
+    "axios": "^0.20.0",
+    "esm": "^3.2.25",
+    "isomorphic-ws": "^4.0.1",
+    "slash": "^3.0.0",
+    "ws": "^7.3.1"
+  },
+  "devDependencies": {
+    "dotenv": "^8.2.0",
+    "jsdoc": "^3.6.6"
+  }
+}
