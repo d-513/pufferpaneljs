@@ -39,5 +39,7 @@ async function main() {
 main();
 ```
 
+### JSDoc
+
 PufferPanelJS has much more classes and functions than shown in the example.  
 See the documentation [here](https://dada513.github.io/pufferpaneljs/)
