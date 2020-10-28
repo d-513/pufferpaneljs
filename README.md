@@ -4,9 +4,9 @@ A JavaScript library for interacting with [PufferPanel](https://pufferpanel.com)
 
 ### Installation
 
-| NPM                         | YARN                     |
-| --------------------------- | ------------------------ |
-| `npm install pufferpaneljs` | `yarn add pufferpaneljs` |
+| NPM                                  | YARN                              |
+| ------------------------------------ | --------------------------------- |
+| `npm install @dada513/pufferpaneljs` | `yarn add @dada513/pufferpaneljs` |
 
 ### Usage
 

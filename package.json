@@ -1,5 +1,5 @@
 {
-  "name": "pufferpaneljs",
+  "name": "@dada513/pufferpaneljs",
   "version": "2.1.1-rc.1",
   "description": "JS utility for interacting with PufferPanel",
   "main": "load.js",
