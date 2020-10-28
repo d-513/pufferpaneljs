@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: PufferServer.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: PufferServer.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Status of a server
+ * @typedef {Object} ServerStatus
+ * @property {boolean} running
+ */
+
+/**
+ * RAM and CPU usage of a server
+ * @typedef {Object} ServerUsageStatus
+ * @property {number} memory - The RAM used, in bytes
+ * @property {number} cpu - The CPU usage, in percent 100 represents one core
+ */
+
+import { httpToWs, simpleWsListener } from "../utils/protocol";
+import { PufferFileManager as FileManager, PufferConsole as Console } from ".";
+import http from "axios";
+import WebSocket from "isomorphic-ws";
+import combineURLs from "axios/lib/helpers/combineURLs";
+import events from "events";
+
+/**
+ * PufferPanel Server
+ * @property {string} id - The ID of the server
+ * @property {string} name - The name of the server
+ * @property {Object} node - The node the server is hosted on
+ * @property {Array} log - The console logs of the server
+ * @property {FileManager} fileManager - The file manager
+ * @property {Console} console - The console
+ */
+class PufferServer extends events.EventEmitter {
+  /**
+   *
+   * @param {object} data - Server data from PufferClient#getServers
+   * @param {string} session - The session ID to use
+   * @param {string} url - The panel URL to use
+   */
+  constructor(data, session, url) {
+    super();
+    this.id = data.id;
+    this.name = data.name;
+    this.node = data.node;
+    this.log = [];
+    this._url = url;
+    this._session = session;
+    this._ws = null;
+    this._axios = http.create({
+      baseURL: this._url,
+      headers: {
+        Authorization: `Bearer ${session}`,
+      },
+    });
+    this.fileManager = new FileManager(this);
+    this.console = new Console(this);
+  }
+
+  /**
+   * Gets the status of the server.
+   * @async
+   * @returns {Promise&lt;ServerStatus>}
+   */
+  async getStatus() {
+    const res = await this._axios.get(`/proxy/daemon/server/${this.id}/status`);
+    return res.data;
+  }
+
+  /**
+   * Connects to the server's websocket
+   * Most functions will not be available without calling this first.
+   * @returns {Promise&lt;WebSocket>} The WebSocket
+   */
+  connect() {
+    this._ws = new WebSocket(
+      httpToWs(combineURLs(this._url, `/proxy/daemon/socket/${this.id}`)),
+      {
+        headers: {
+          Cookie: `puffer_auth=${this._session}`,
+        },
+      }
+    );
+    return new Promise((resolve, reject) => {
+      this._ws.on("open", () => {
+        this._registerWsEvents();
+        resolve(this._ws);
+      });
+      this._ws.on("error", (err) => reject(err));
+    });
+  }
+
+  /**
+   * Disconnects the websocket connection
+   * @return {Promise&lt;undefined>}
+   */
+  disconnect() {
+    return new Promise((resolve) => {
+      this._ws.close();
+      this._ws.on("close", () => resolve());
+    });
+  }
+
+  /**
+   * Gets the CPU and RAM usage stats of the server
+   * @async
+   * @returns {Promise&lt;ServerUsageStatus>}
+   */
+  async getStats() {
+    this._ws.send(JSON.stringify({ type: "stat" }));
+    const res = await simpleWsListener(this._ws, "stat");
+    return res.data;
+  }
+
+  /**
+   * Replays logs from before the websocket connection was established
+   * @async
+   * @returns {Promise&lt;Array>} - The array of log messages
+   */
+  async replayLogs() {
+    this._ws.send(JSON.stringify({ type: "replay" }));
+    const logs = await simpleWsListener(this._ws, "console");
+    return logs.data.logs;
+  }
+
+  /**
+   * Starts the server
+   * @returns {Promise&lt;Array>} The startup logs
+   */
+  async start() {
+    const log = [];
+  }
+
+  _registerWsEvents() {
+    this._ws.on("message", (msg) => {
+      const message = JSON.parse(msg);
+      if (message.type === "console") {
+        /**
+         * Emmitted when a log message is received from the daemon
+         * @event PufferServer#log
+         * @type {string}
+         */
+        this.emit("log", message.data.logs.join("").trim());
+        this.log.concat(message.data.logs);
+      } else if (message.type === "stat") {
+        /**
+         * Emmitted when the server receives the cpu and ram usage status.
+         * Won't be emmitted unless PufferServer#getStats is called
+         * @event PufferServer#stat
+         * @type {ServerUsageStatus}
+         */
+        this.emit("stat", message.data);
+      }
+    });
+  }
+}
+
+export default PufferServer;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="PufferClient.html">PufferClient</a></li><li><a href="PufferConsole.html">PufferConsole</a></li><li><a href="PufferFile.html">PufferFile</a></li><li><a href="PufferFileManager.html">PufferFileManager</a></li><li><a href="PufferServer.html">PufferServer</a></li><li><a href="PufferTemplate.html">PufferTemplate</a></li><li><a href="PufferUser.html">PufferUser</a></li></ul><h3>Events</h3><ul><li><a href="PufferServer.html#event:log">log</a></li><li><a href="PufferServer.html#event:stat">stat</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Wed Oct 28 2020 12:48:48 GMT+0000 (Coordinated Universal Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
