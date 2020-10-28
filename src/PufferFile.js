@@ -6,7 +6,7 @@
  * @property {string} extension - The file extension
  */
 
-import { PufferFileManager } from ".";
+import PufferFileManager from "./PufferFileManager";
 import { simpleWsListener } from "../utils/protocol";
 
 /**

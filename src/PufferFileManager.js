@@ -1,4 +1,5 @@
-import { PufferServer, PufferFile } from ".";
+import PufferFile from "./PufferFile";
+import PufferServer from "./PufferServer";
 import { simpleWsListener } from "../utils/protocol";
 import path from "path";
 import slash from "slash";

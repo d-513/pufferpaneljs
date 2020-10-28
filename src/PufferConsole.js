@@ -1,4 +1,4 @@
-import { PufferServer } from ".";
+import PufferServer from "./PufferServer";
 /**
  * Class for sending commands to a server
  */

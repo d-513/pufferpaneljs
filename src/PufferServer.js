@@ -12,7 +12,8 @@
  */
 
 import { httpToWs, simpleWsListener } from "../utils/protocol";
-import { PufferFileManager as FileManager, PufferConsole as Console } from ".";
+import PufferFileManager from "./PufferFileManager";
+import PufferConsole from "./PufferConsole";
 import http from "axios";
 import WebSocket from "isomorphic-ws";
 import combineURLs from "axios/lib/helpers/combineURLs";
@@ -49,8 +50,8 @@ class PufferServer extends events.EventEmitter {
         Authorization: `Bearer ${session}`,
       },
     });
-    this.fileManager = new FileManager(this);
-    this.console = new Console(this);
+    this.fileManager = new PufferFileManager(this);
+    this.console = new PufferConsole(this);
   }
 
   /**
@@ -120,11 +121,38 @@ class PufferServer extends events.EventEmitter {
   }
 
   /**
-   * Starts the server
-   * @returns {Promise<Array>} The startup logs
+   * Starts the server. Resolves after the daemon has received the message.
+   * @async
+   * @returns {Promise<null>}
    */
   async start() {
+    this._ws.send(JSON.stringify({ type: "start" }));
+    await simpleWsListener(this._ws, "status");
+    return null;
+  }
+
+  /**
+   * Stops the server. Resolves after the server is stopped. You may not want to await this call.
+   * @async
+   * @returns {Promise<string[]>} - The shutdown logs
+   */
+  async stop() {
     const log = [];
+    this.on("log", (msg) => log.push(msg));
+    this._ws.send(JSON.stringify({ type: "stop" }));
+    await simpleWsListener(this._ws, "status");
+    return log;
+  }
+
+  /**
+   * Kills the server. Resolves after the process exits.
+   * @async
+   * @returns {Promise<null>}
+   */
+  async kill() {
+    this._ws.send(JSON.stringify({ type: "kill" }));
+    await simpleWsListener(this._ws, "status");
+    return;
   }
 
   _registerWsEvents() {
